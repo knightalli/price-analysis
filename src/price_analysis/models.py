@@ -10,3 +10,9 @@ class PriceRecord(BaseModel):
 class LoadResult(BaseModel):
     records: dict[str, PriceRecord] = {}
     warnings: list[str] = []
+
+class MatchedProduct(BaseModel):
+    sku: str
+    name: str
+    own_price: float
+    competitor_prices: dict[str, float] = {}

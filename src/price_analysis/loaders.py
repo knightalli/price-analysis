@@ -1,24 +1,41 @@
 import csv
+import pandas as pd
+
 from pathlib import Path
 from price_analysis.models import LoadResult, PriceRecord
-
 from price_analysis.exceptions import PriceLoadError, MissingColumnError
 
 
 def read_records(path:str):
     """Получает файл и построчно читает его"""
-    with open(path, encoding = "utf-8") as f:
-        reader = csv.DictReader(f)
-        missing = {"sku", "name", "price"} - set(reader.fieldnames or [])
-        if missing:
-            raise MissingColumnError(Path(path).name, missing)
-        for lineno, row in enumerate(reader, start = 2):
-            try:
-                record = PriceRecord(sku=row["sku"], name=row["name"],
-                                     price=float(row["price"]), source=Path(path).name)
-            except ValueError as e:
-                raise PriceLoadError(Path(path).name, f"неправильный формат: {e}", lineno)
-            yield record
+    with open(path, encoding = "utf-8") as frame:
+        suffix = Path(path).suffix.lower()
+        if suffix == ".csv":
+            reader = csv.DictReader(frame)
+            missing = {"sku", "name", "price"} - set(reader.fieldnames or [])
+            if missing:
+                raise MissingColumnError(Path(path).name, missing)
+            for lineno, row in enumerate(reader, start = 2):
+                try:
+                    record = PriceRecord(sku=row["sku"], name=row["name"],
+                                         price=float(row["price"]), source=Path(path).name)
+                except ValueError as e:
+                    raise PriceLoadError(Path(path).name, f"неправильный формат: {e}", lineno)
+                yield record
+        elif suffix == ".xlsx":
+            frame = pd.read_excel(path)
+            missing = {"sku", "name", "price"} - set(frame.columns)
+            if missing:
+                raise MissingColumnError(Path(path).name, missing)
+            for lineno, row in enumerate(frame.itertuples(index = False), start = 2):
+                try:
+                    record = PriceRecord(sku=row.sku, name=row.name,
+                                         price=float(row.price), source=Path(path).name)
+                except ValueError as e:
+                    raise PriceLoadError(Path(path).name, f"неправильный формат: {e}", lineno)
+                yield record
+        else:
+            raise PriceLoadError(Path(path).name, f"Неподдерживаемый формат файла")
 
 
 def load_price_list(path:str):
@@ -34,4 +51,12 @@ def load_price_list(path:str):
 
 
 if __name__ == "__main__":
-    print(load_price_list("../../data/shop.csv"))
+    #print(load_price_list("../../data/shop1.csv"))
+    #print(load_price_list("../../data/competitor_b.xlsx"))
+
+    shop = load_price_list("../../data/shop.csv")
+    comp = load_price_list("../../data/competitor_a.csv")
+
+    print(set(shop.records) & set(comp.records))
+    print(set(shop.records) - set(comp.records))
+    print(set(comp.records) - set(shop.records))
