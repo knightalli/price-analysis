@@ -17,8 +17,10 @@ def read_records(path:str):
                 raise MissingColumnError(Path(path).name, missing)
             for lineno, row in enumerate(reader, start = 2):
                 try:
+                    raw_cost = row.get("cost")
+                    cost = float(raw_cost) if raw_cost else None
                     record = PriceRecord(sku=row["sku"], name=row["name"],
-                                         price=float(row["price"]), source=Path(path).name)
+                                         price=float(row["price"]), cost=cost, source=Path(path).name)
                 except ValueError as e:
                     raise PriceLoadError(Path(path).name, f"неправильный формат: {e}", lineno)
                 yield record
@@ -51,12 +53,12 @@ def load_price_list(path:str):
 
 
 if __name__ == "__main__":
-    #print(load_price_list("../../data/shop1.csv"))
-    #print(load_price_list("../../data/competitor_b.xlsx"))
+    print(load_price_list("../../data/shop.csv"))
+    print(load_price_list("../../data/competitor_b.xlsx"))
 
-    shop = load_price_list("../../data/shop.csv")
-    comp = load_price_list("../../data/competitor_a.csv")
-
-    print(set(shop.records) & set(comp.records))
-    print(set(shop.records) - set(comp.records))
-    print(set(comp.records) - set(shop.records))
+    # shop = load_price_list("../../data/shop.csv")
+    # comp = load_price_list("../../data/competitor_a.csv")
+    #
+    # print(set(shop.records) & set(comp.records))
+    # print(set(shop.records) - set(comp.records))
+    # print(set(comp.records) - set(shop.records))

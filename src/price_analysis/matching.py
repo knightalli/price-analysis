@@ -16,6 +16,7 @@ def matching_products(own: LoadResult, competitors: dict[str, LoadResult]) -> tu
                 sku = sku,
                 name = record.name,
                 own_price = record.price,
+                cost=record.cost,
                 competitor_prices = prices,
             ))
         else:
